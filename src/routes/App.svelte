@@ -54,6 +54,11 @@
 		isEdit = true;
 	}
 
+	function cancelEditingNote(note) {
+		isEdit = !isEdit;
+		clearInputs();
+	}
+
 	async function editNote() {
 		showLoader = true;
 		await api.put(data.id, data);
@@ -121,6 +126,11 @@
 									on:click|preventDefault={editNote}
 									type="submit"
 									class="btn btn-info">Edit Note</button
+								>
+								<button
+									on:click={cancelEditingNote}
+									type="submit"
+									class="btn btn-danger">Cancel</button
 								>
 							{/if}
 						</form>
