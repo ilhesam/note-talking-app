@@ -1,5 +1,10 @@
 <script>
-	import NoteCard from "./components/NoteCard.svelte";
+	import { onMount } from "svelte";
+	import * as api from "../api.js";
+	import NoteCard from "../lib/NoteCard.svelte";
+	import Loader from "../lib/Loader.svelte";
+
+	let showLoader = false;
 
 	let isEdit = false;
 	let data = {
@@ -8,71 +13,60 @@
 		content: "",
 		id: null,
 	};
+	let notes = [];
 
-	let notes = [
-		{
-			id: 1,
-			title: "Sweetest framework ever",
-			category: "Church",
-			content: "This is the content of this note",
-		},
-		{
-			id: 2,
-			title: "Intro to svelte",
-			category: "School",
-			content:
-				"This could be an intro to svelt,so you need to keep calm and see the magic",
-		},
-	];
+	onMount(async () => {
+		showLoader = true;
+		await getNotes();
+		showLoader = false;
+	});
 
-	function addNote() {
-		const newNote = {
-			id: notes.length + 1,
-			title: data.title,
-			category: data.category,
-			content: data.content,
-		};
-		notes = notes.concat(newNote);
+	async function getNotes() {
+		notes = await api.get();
+	}
+
+	async function clearInputs() {
 		data = {
 			id: null,
 			title: "",
 			category: "",
 			content: "",
 		};
-		console.log(notes);
 	}
 
-	function deleteNote(id) {
-		console.log(id);
-		notes = notes.filter((note) => note.id !== id);
+	async function addNote() {
+		showLoader = true;
+		await api.post("", data);
+		clearInputs();
+		await getNotes();
+		showLoader = false;
+	}
+
+	async function deleteNote(id) {
+		showLoader = true;
+		await api.del(id);
+		await getNotes();
+		showLoader = false;
 	}
 
 	function startEditingNote(note) {
-		console.log(note);
 		data = note;
 		isEdit = true;
 	}
 
-	function editNote() {
+	async function editNote() {
+		showLoader = true;
+		await api.put(data.id, data);
 		isEdit = !isEdit;
-		let noteDB = {
-			title: data.title,
-			category: data.category,
-			content: data.content,
-			id: data.id,
-		};
-		let objIndex = notes.findIndex((obj) => obj.id == noteDB.id);
-		console.log("Before update: ", notes[objIndex]);
-		notes[objIndex] = noteDB;
-		data = {
-			id: null,
-			title: "",
-			category: "",
-			content: "",
-		};
+		clearInputs();
+		await getNotes();
+		showLoader = false;
 	}
 </script>
 
+{#if showLoader}
+	<Loader size="60" unit="px" duration="1s" />
+{/if}
 <section>
 	<div class="container">
 		<div class="row mt-5">
@@ -94,22 +88,22 @@
 							<div class="form-group">
 								<label for="category">Category</label>
 								<select
-									bind:value={data.value}
+									bind:value={data.category}
 									class="form-control"
 									id="category"
 								>
 									<option selected disaabled
 										>Selecet a category</option
 									>
+									<option>Church</option>
 									<option>School</option>
-									<option>School</option>
-									<option>School</option>
+									<option>Other</option>
 								</select>
 							</div>
 							<div class="form-group">
 								<label for="content">Content</label>
 								<textarea
-									bind:value={data.value}
+									bind:value={data.content}
 									class="form-control"
 									id="content"
 									rows="3"
@@ -120,7 +114,7 @@
 								<button
 									on:click|preventDefault={addNote}
 									type="submit"
-									class="btn btn-primary">Add Note</button
+									class="btn btn-primary">+ Add Note</button
 								>
 							{:else}
 								<button
@@ -136,7 +130,10 @@
 			<div class="col-md-6">
 				{#each notes as note}
 					<NoteCard {note}>
-						<button class="btn btn-info" on:click={editNote(note)}>
+						<button
+							class="btn btn-info"
+							on:click={startEditingNote(note)}
+						>
 							Edit
 						</button>
 						<button

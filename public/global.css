@@ -61,3 +61,14 @@ button:not(:disabled):active {
 button:focus {
 	border-color: #666;
 }
+
+.wrapper {
+	height: 100% !important;
+	width: 100% !important;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 100;
+	background: rgba(255, 255, 255, 0.6);
+}
